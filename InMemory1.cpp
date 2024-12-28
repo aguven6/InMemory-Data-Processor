@@ -39,8 +39,17 @@ Aggregation
 #include <typeinfo>
 #include<variant>
 #include <algorithm>
+#include <fstream>
+#include <map>
+#include <sstream>
+#include <string>
+#include <chrono>
+#include <ctime>
+
+
 
 using namespace std;
+//using DynamicData = variant<IndexedData<int>, IndexedData<double>, IndexedData<std::string>>;
 
 //Data Item to store Data with Index of the Data
 template<typename T>
@@ -50,7 +59,11 @@ public:
     {
         this->index = index;
         this->value = value;
-    };
+    }
+    IndexedData()
+    {
+       
+    }
     int index;  // Row index
     T value;    // Data value
 
@@ -73,6 +86,222 @@ public:
 
         Storage.push_back(Data);
         
+    }
+    vector<string> Split(const string& str, char delimiter) {
+        vector<string> tokens;
+        stringstream ss(str);
+        string token;
+        while (getline(ss, token, delimiter)) {
+            tokens.push_back(token);
+        }
+        return tokens;
+    }
+    
+    //template<typename T>
+    void LoadCSVData(string filepath, bool HasHeader)
+    {
+        ifstream file(filepath);
+        if (!file.is_open()) {
+            cerr << "Failed to open file!" << endl;
+            //return false;
+        }
+
+
+        string line;
+        bool is_header = true; // Skip the header line
+        int row_index = 0;     // Variable to track the row index
+       
+        // Read the file line by line
+        while (getline(file, line))
+        {
+            if (HasHeader) {
+                HasHeader = false;
+                vector<string> columns_data = Split(line, ',');
+                int index = 0;
+                for (size_t i = 0; i < columns_data.size(); i++)
+                {
+                    //AG
+                    //Implement IndexedData Object into vector for each type of <T>
+                    map<string, int> myMap;
+                    vector<string> column_info = Split(columns_data[i], ':');
+                    myMap.insert(make_pair(column_info[0], index));
+                    IndexDataTypes.insert(make_pair(index, column_info[1]));
+                    ColumnsIndex.push_back(myMap);
+                    IndexedData tmp = {index,column_info[0]};
+                    Columns.push_back(tmp);
+                    ++index;
+                }
+                continue; // Skip the header line
+            }
+            //Line to Array by split
+            vector<string> columns_data = Split(line, ',');
+
+            IndexedData<string>* Str_Data_Pointer = NULL;//new IndexedData<string>();
+            IndexedData<string>* Date_Data_Pointer = NULL; //new IndexedData<string>();
+            IndexedData<int>* Int_Data_Pointer = NULL;//new IndexedData<int>();
+            IndexedData<double>* Dbl_Data_Pointer = NULL;//new IndexedData<double>();
+
+            // Add each column value to the respective column index with its row index
+            for (size_t i = 0; i < columns_data.size(); ++i) {
+               
+                                
+                if (IndexDataTypes[i] == "string")
+                {
+                    delete  Str_Data_Pointer;
+                    Str_Data_Pointer = new IndexedData<string>(row_index, columns_data[i]);
+                }
+                else if (IndexDataTypes[i] == "number" || IndexDataTypes[i] == "integer" || IndexDataTypes[i] == "int")
+                {
+                    delete   Int_Data_Pointer;
+                    Int_Data_Pointer = new IndexedData<int>(row_index, stoi(string(columns_data[i])));
+                }
+                else if (IndexDataTypes[i] == "bignumber" || IndexDataTypes[i] == "double" || IndexDataTypes[i] == "float")
+                {
+                    delete  Dbl_Data_Pointer;
+                    Dbl_Data_Pointer = new IndexedData<double>(row_index, stod(string(columns_data[i])));
+                }
+                else if (IndexDataTypes[i] == "date")
+                {
+                    delete  Date_Data_Pointer;
+                    Date_Data_Pointer = new IndexedData<string>(row_index, string(columns_data[i]));
+                }//any_cast<std::chrono::system_clock::time_point>(columns_data[i])
+                else
+                {
+                    delete  Str_Data_Pointer;
+                    Str_Data_Pointer = new IndexedData<string>(row_index, string(columns_data[i]));
+                }
+
+                
+
+                if (Storage.size() < Columns.size())
+                {
+                    //A new Columnar Vector will be added to Storage
+                    if (Str_Data_Pointer != NULL)
+                    {
+                        vector<IndexedData<string>>* tmp=new vector<IndexedData<string>>();
+                        tmp->push_back(*Str_Data_Pointer);
+                        Storage.push_back(*tmp);
+                        Str_Data_Pointer = NULL;
+                        continue;
+                    }
+                    else if (Int_Data_Pointer != NULL)
+                    {
+                        vector<IndexedData<int>>* tmp = new vector<IndexedData<int>>();
+                        tmp->push_back(*Int_Data_Pointer);
+                        Storage.push_back(*tmp);
+                        Int_Data_Pointer = NULL;
+                        continue;
+                    }
+                    else if (Dbl_Data_Pointer != NULL)
+                    {
+                        vector<IndexedData<double>>* tmp = new vector<IndexedData<double>>();
+                        tmp->push_back(*Dbl_Data_Pointer);
+                        Storage.push_back(*tmp);
+                        Dbl_Data_Pointer = NULL;
+                        continue;
+                    }
+                    else if (Date_Data_Pointer != NULL)
+                    {
+                        vector<IndexedData<string>>* tmp = new vector<IndexedData<string>>();
+                        tmp->push_back(*Date_Data_Pointer);
+                        Storage.push_back(*tmp);
+                        Date_Data_Pointer = NULL;
+                        continue;
+                    }
+                    else
+                    {
+                        //Default Data Type Keep String
+                        vector<IndexedData<string>>* tmp = new vector<IndexedData<string>>();
+                        tmp->push_back(*Str_Data_Pointer);
+                        Storage.push_back(*tmp);
+                        Str_Data_Pointer = NULL;
+                        continue;
+                    }
+                }
+                else
+                {
+                    string colname = Columns[i].value;
+                    string coltype=IndexDataTypes[i];
+                    if (coltype == "string")
+                    {
+                        
+                        auto& data = Storage[i];
+                        auto DataVec = get_if<vector<IndexedData<string>>>(&data);
+                        if (DataVec == NULL)
+                        {
+                            cout << "Data not found. Check your index" << endl;
+                        }
+                        else
+                        {      
+                            DataVec->push_back(*Str_Data_Pointer);
+                        }
+                        continue;
+                    }
+                    else if (coltype == "int")
+                    {
+                        auto& data = Storage[i];
+                        auto DataVec = get_if<vector<IndexedData<int>>>(&data);
+                        if (DataVec == NULL)
+                        {
+                            cout << "Data not found. Check your index" << endl;
+                        }
+                        else
+                        {
+                            DataVec->push_back(*Int_Data_Pointer);
+                        }
+                        continue;
+                    }
+                    else if(coltype=="double")
+                    {
+                        auto& data = Storage[i];
+                        auto DataVec = get_if<vector<IndexedData<double>>>(&data);
+                        if (DataVec == NULL)
+                        {
+                            cout << "Data not found. Check your index" << endl;
+                        }
+                        else
+                        {
+                            DataVec->push_back(*Dbl_Data_Pointer);
+                        }
+                        continue;
+                    }
+                    else if(coltype=="date")
+                    {
+                        auto& data = Storage[i];
+                        auto DataVec = get_if<vector<IndexedData<string>>>(&data);
+                        if (DataVec == NULL)
+                        {
+                            cout << "Data not found. Check your index" << endl;
+                        }
+                        else
+                        {
+                            DataVec->push_back(*Date_Data_Pointer);
+                        }
+                        continue;
+                    }
+                    else
+                    {
+                        auto& data = Storage[i];
+                        auto DataVec = get_if<vector<IndexedData<string>>>(&data);
+                        if (DataVec == NULL)
+                        {
+                            cout << "Data not found. Check your index" << endl;
+                        }
+                        else
+                        {
+                            DataVec->push_back(*Str_Data_Pointer);
+                        }
+                    }
+                }
+
+            }
+
+            // Increment row index
+            row_index++;
+
+        }
+        file.close();
+        ReIndexData();
     }
 
     template<typename T>
@@ -134,26 +363,76 @@ public:
 
 
 private:
+    vector<map<string, int>> ColumnsIndex;
+    vector<IndexedData<string>> Columns;
+    map<int, string> IndexDataTypes;
+    string TableName;
     vector<variant<vector<IndexedData<int>>, vector<IndexedData<double>>, vector<IndexedData<string>>>> Storage;
-    
-    template<typename T>
-    void ReIndexData(int Index)
+   
+    void ReIndexData(int Index=-1)
     {
-        auto tmp = new vector<T>();
+        int LowerBound = 0;
+        int UpperBound = Storage.size();
 
-        const auto& data = Storage[Index];
-        auto intPtr = get_if<vector<IndexedData<int>>>(&data);
-        if (intPtr == NULL)
+        if (Index != -1)
         {
-            cout << "Data not found. Check your index" << endl;
+            LowerBound = Index;
+            UpperBound = Index + 1;
         }
-        else
+
+        for (size_t i = LowerBound; i < UpperBound; i++)
         {
-            for (const auto& val : *intPtr) 
+
+
+            if (IndexDataTypes[i] == "string")
             {
-                tmp->push_back(val.value);
+                auto& data = Storage[i];
+                auto Data = get_if<vector<IndexedData<string>>>(&data);
+                //Sort Ascending Order
+                std::sort((*Data).begin(), (*Data).end(), [](const IndexedData<string>& obj1, const IndexedData<string>& obj2) {
+                    return obj1.value < obj2.value; // Comparison based on `value`
+                    });
             }
+            else if (IndexDataTypes[i] == "number" || IndexDataTypes[i] == "integer" || IndexDataTypes[i] == "int")
+            {
+                auto& data = Storage[i];
+                auto Data = get_if<vector<IndexedData<int>>>(&data);
+                //Sort Ascending Order
+                std::sort((*Data).begin(), (*Data).end(), [](const IndexedData<int>& obj1, const IndexedData<int>& obj2) {
+                    return obj1.value < obj2.value; // Comparison based on `value`
+                    });
+            }
+            else if (IndexDataTypes[i] == "bignumber" || IndexDataTypes[i] == "double" || IndexDataTypes[i] == "float")
+            {
+                auto& data = Storage[i];
+                auto Data = get_if<vector<IndexedData<double>>>(&data);
+                //Sort Ascending Order
+                std::sort((*Data).begin(), (*Data).end(), [](const IndexedData<double>& obj1, const IndexedData<double>& obj2) {
+                    return obj1.value < obj2.value; // Comparison based on `value`
+                    });
+            }
+            else if (IndexDataTypes[i] == "date")
+            {
+                auto& data = Storage[i];
+                auto Data = get_if<vector<IndexedData<string>>>(&data);
+                //Sort Ascending Order
+                std::sort((*Data).begin(), (*Data).end(), [](const IndexedData<string>& obj1, const IndexedData<string>& obj2) {
+                    return obj1.value < obj2.value; // Comparison based on `value`
+                    });
+            }//any_cast<std::chrono::system_clock::time_point>(columns_data[i])
+            else
+            {
+                auto& data = Storage[i];
+                auto Data = get_if<vector<IndexedData<string>>>(&data);
+                //Sort Ascending Order
+                std::sort((*Data).begin(), (*Data).end(), [](const IndexedData<string>& obj1, const IndexedData<string>& obj2) {
+                    return obj1.value < obj2.value; // Comparison based on `value`
+                    });
+            }
+
         }
+        
+      
     }
 
 };
@@ -161,7 +440,8 @@ private:
 int main() {
     
     vector<InMemoryTable*>* Data = new vector<InMemoryTable*>();
-
+    InMemoryTable* filemem = new InMemoryTable();
+    filemem->LoadCSVData("data.csv", true);
     //Create A In Memory Data Table
     InMemoryTable* strmem = new InMemoryTable();
     Data->push_back(strmem);
