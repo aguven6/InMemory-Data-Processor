@@ -80,12 +80,7 @@ public:
         std::sort(Data.begin(), Data.end(), [](const IndexedData<T>& obj1, const IndexedData<T>& obj2) {
             return obj1.value < obj2.value; // Comparison based on `value`
             });
-
-       
-           
-
-        Storage.push_back(Data);
-        
+        Storage.push_back(Data);        
     }
     vector<string> Split(const string& str, char delimiter) {
         vector<string> tokens;
@@ -103,9 +98,7 @@ public:
         ifstream file(filepath);
         if (!file.is_open()) {
             cerr << "Failed to open file!" << endl;
-            //return false;
         }
-
 
         string line;
         bool is_header = true; // Skip the header line
@@ -315,7 +308,6 @@ public:
     vector<T> GetRawVectorData(int Index)
     {
         
-
         auto tmp = new vector<T>();
 
         const auto& data = Storage[Index];
@@ -368,7 +360,6 @@ private:
     map<int, string> IndexDataTypes;
     string TableName;
     vector<variant<vector<IndexedData<int>>, vector<IndexedData<double>>, vector<IndexedData<string>>>> Storage;
-   
     void ReIndexData(int Index=-1)
     {
         int LowerBound = 0;
@@ -438,24 +429,33 @@ private:
 };
 
 int main() {
-    
+    //Driver Code to test functionalities
+    //Vector to store All Data
     vector<InMemoryTable*>* Data = new vector<InMemoryTable*>();
+    
+    //Data 1 : Create Data from CSV File
     InMemoryTable* filemem = new InMemoryTable();
     filemem->LoadCSVData("data.csv", true);
-    //Create A In Memory Data Table
+    
+    //Data 2 : Create Data from Vector String
     InMemoryTable* strmem = new InMemoryTable();
     Data->push_back(strmem);
     auto vecstr = new vector<IndexedData<string>>{ { 1,"Mehtap"},{2,"Deniz"},{3,"Ziya"}, {4,"Eþe"},{5,"Abuzer"}};
     strmem->LoadVectorData(*vecstr);
 
+    //Data 2 : Create Data from Vector integer
     InMemoryTable* mem = new InMemoryTable();
     Data->push_back(mem);
     auto vecint = new vector<IndexedData<int>>{ { 1,3},{ 2,2 },{ 3,4 }, { 4,8 },{5,6} };
     mem->LoadVectorData(*vecint);
 
+    //Data 2 : Create Data from Vector double
     auto vecdbl = new vector<IndexedData<double>>{ { 1,1.5},{ 2,2.4 },{ 3,3.4444 }, { 4,4.9999 },{5,5.22222} };
     mem->LoadVectorData(*vecdbl);
 
+
+    //Some stuff to test.
+    //------------------------------------------------------------------------------------------------------
     auto vec1 = mem->GetVectorDataWithIndex<int>(0);
 
     vector<int> tst = mem->GetRawVectorData<int>(0);
@@ -471,35 +471,7 @@ int main() {
 
     delete vecint,vecdbl,vecstr;
     delete mem,strmem;
-    //vector<variant<vector<IndexedData<int>>, vector<IndexedData<double>>, vector<IndexedData<string>>>> Storage;
-    //vector<IndexedData<double>>* x=new vector<IndexedData<double>>();
-    //x->push_back({ 1,5.8787 });
-    //Storage.push_back(*x);
-
-    //auto vec = new vector<IndexedData<int>>{ { 1,1},{ 2,2 },{ 3,3 }, { 4,4 },{5,5} };
-    //vec->push_back({ 6,6 });
-    //Storage.push_back(*vec);
-
-    //auto y = new vector<IndexedData<string>>();
-    //y->push_back({ 1,"Aykut" });
-    //y->push_back({ 2,"Guven" });
-    //Storage.push_back(*y);
-
-   
-    //int index = 1;
-    //const auto& data = Storage[index];
-    //auto intPtr = get_if<vector<IndexedData<int>>>(&data);
-    //if (intPtr == NULL)
-    //{
-    //    cout << "Data not found. Check your index" << endl;
-    //}
-    //else
-    //{
-    //    cout << "Data found." << endl;
-    //    for (const auto& val : *intPtr) {
-    //        cout << val.index << " - " << val.value << endl;
-    //    }
-    //}
+  
     
     
     return 0;
