@@ -39,3 +39,7 @@ Aggregation
 3- Group By a Key and aggregate values for whole data
 
 4- Group By a Key and aggregate values with Filtering
+
+-----------------------------------------------------------------------------------------------------------------
+When we complete this task. We will use GPUs to process data. 
+NEXT Step will be GPU usage for computing. We will divide and conquer that This is what Computer Science loves.
