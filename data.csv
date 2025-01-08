@@ -1,3 +1,6 @@
+#Headers must contain column types
+#Otherwise they will be accepted as String Type
+
 Name:string, Age:int, Birth:date
 John, 25, 1996-02-15
 Alice, 30, 1991-06-20

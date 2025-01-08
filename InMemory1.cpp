@@ -73,6 +73,7 @@ class InMemoryTable
 {
 public:
     InMemoryTable() {}
+    string TableName="";
     template<typename T>
     void LoadVectorData(vector<IndexedData<T>> Data)
     {
@@ -101,12 +102,15 @@ public:
         }
 
         string line;
-        bool is_header = true; // Skip the header line
         int row_index = 0;     // Variable to track the row index
        
         // Read the file line by line
         while (getline(file, line))
         {
+            //Check If Comment Line or Empty line
+            //if (line._Starts_with("#") || line._Starts_with(" / ") || line._Starts_with(" - ") || line._Starts_with(""))
+            if (line[0]=='#' || line[0] == '-' || line[0] == '/'|| line.empty())
+                continue;
             if (HasHeader) {
                 HasHeader = false;
                 vector<string> columns_data = Split(line, ',');
@@ -358,7 +362,7 @@ private:
     vector<map<string, int>> ColumnsIndex;
     vector<IndexedData<string>> Columns;
     map<int, string> IndexDataTypes;
-    string TableName;
+   
     vector<variant<vector<IndexedData<int>>, vector<IndexedData<double>>, vector<IndexedData<string>>>> Storage;
     void ReIndexData(int Index=-1)
     {
@@ -427,53 +431,161 @@ private:
     }
 
 };
-
+string ShowMenu();
+vector<InMemoryTable*>* Data = new vector<InMemoryTable*>();
 int main() {
     //Driver Code to test functionalities
     //Vector to store All Data
-    vector<InMemoryTable*>* Data = new vector<InMemoryTable*>();
     
-    //Data 1 : Create Data from CSV File
-    InMemoryTable* filemem = new InMemoryTable();
-    filemem->LoadCSVData("data.csv", true);
     
-    //Data 2 : Create Data from Vector String
-    InMemoryTable* strmem = new InMemoryTable();
-    Data->push_back(strmem);
-    auto vecstr = new vector<IndexedData<string>>{ { 1,"Mehtap"},{2,"Deniz"},{3,"Ziya"}, {4,"Eþe"},{5,"Abuzer"}};
-    strmem->LoadVectorData(*vecstr);
+    ////Data 1 : Create Data from CSV File
+    //InMemoryTable* filemem = new InMemoryTable();
+    //filemem->LoadCSVData("data.csv", true);
+    //
+    ////Data 2 : Create Data from Vector String
+    //InMemoryTable* strmem = new InMemoryTable();
+    //Data->push_back(strmem);
+    //auto vecstr = new vector<IndexedData<string>>{ { 1,"Mehtap"},{2,"Deniz"},{3,"Ziya"}, {4,"Eþe"},{5,"Abuzer"}};
+    //strmem->LoadVectorData(*vecstr);
 
-    //Data 2 : Create Data from Vector integer
-    InMemoryTable* mem = new InMemoryTable();
-    Data->push_back(mem);
-    auto vecint = new vector<IndexedData<int>>{ { 1,3},{ 2,2 },{ 3,4 }, { 4,8 },{5,6} };
-    mem->LoadVectorData(*vecint);
+    ////Data 2 : Create Data from Vector integer
+    //InMemoryTable* mem = new InMemoryTable();
+    //Data->push_back(mem);
+    //auto vecint = new vector<IndexedData<int>>{ { 1,3},{ 2,2 },{ 3,4 }, { 4,8 },{5,6} };
+    //mem->LoadVectorData(*vecint);
 
-    //Data 2 : Create Data from Vector double
-    auto vecdbl = new vector<IndexedData<double>>{ { 1,1.5},{ 2,2.4 },{ 3,3.4444 }, { 4,4.9999 },{5,5.22222} };
-    mem->LoadVectorData(*vecdbl);
+    ////Data 2 : Create Data from Vector double
+    //auto vecdbl = new vector<IndexedData<double>>{ { 1,1.5},{ 2,2.4 },{ 3,3.4444 }, { 4,4.9999 },{5,5.22222} };
+    //mem->LoadVectorData(*vecdbl);
 
 
-    //Some stuff to test.
-    //------------------------------------------------------------------------------------------------------
-    auto vec1 = mem->GetVectorDataWithIndex<int>(0);
+    ////Some stuff to test.
+    ////------------------------------------------------------------------------------------------------------
+    //auto vec1 = mem->GetVectorDataWithIndex<int>(0);
 
-    vector<int> tst = mem->GetRawVectorData<int>(0);
+    //vector<int> tst = mem->GetRawVectorData<int>(0);
 
-    for (size_t i = 0; i < tst.size(); i++)
-        cout << tst[i] << " ";
+    //for (size_t i = 0; i < tst.size(); i++)
+    //    cout << tst[i] << " ";
 
-    cout << "Sum: " << (*Data)[0]->Aggregate<int>(0, "sum") << endl;
-    cout << "Avg: " << (*Data)[0]->Aggregate<int>(0, "avg") << endl;
+    //cout << "Sum: " << (*Data)[0]->Aggregate<int>(0, "sum") << endl;
+    //cout << "Avg: " << (*Data)[0]->Aggregate<int>(0, "avg") << endl;
 
-    cout << "Sum: " << mem->Aggregate<double>(1, "sum") << endl;
-    cout << "Avg: " << mem->Aggregate<double>(1, "avg") << endl;
+    //cout << "Sum: " << mem->Aggregate<double>(1, "sum") << endl;
+    //cout << "Avg: " << mem->Aggregate<double>(1, "avg") << endl;
 
-    delete vecint,vecdbl,vecstr;
-    delete mem,strmem;
+    //delete vecint,vecdbl,vecstr;
+    //delete mem,strmem;
   
+    string state = "o";
+    while (state != "e" && state != "E")
+    {
+        state=ShowMenu();
+    }
+        
     
     
     return 0;
+}
+
+string ShowMenu()
+{
+    cout << "\033[2J\033[H";
+    char Choise = 'S';
+    cout << "In Memory Data Processing Menu" << endl;
+    cout << "-------------------------------" << endl;
+    cout << "1- Load Data press (L)" << endl;
+    cout << "2- Execute Query   (Q)" << endl;
+    cout << "3- Aggregate Query (A)" << endl;
+    cout << "4- Exit            (E)" << endl;
+    cout << endl;
+    cout << "your choice:";
+    cin >> Choise;
+    switch (Choise)
+    {
+    case 'L':
+    case 'l':
+    {
+        string dataName = "";
+        string filePath = "";
+        char Selection = 'N';
+        cout << "Enter Dataname:";
+        cin >> dataName;
+        cout << endl;
+        cout << "Enter File Path:";
+        cin >> filePath;
+        cout << "-------------------------------" << endl;
+        cout << "You have entered following." << endl;
+        cout << "Dataname:" << dataName << "/File Path:" << filePath << endl;
+        cout << "Proceed? Yes(Y) No(N)";
+        cin >> Selection;
+        if (Selection == 'Y' || Selection == 'y')
+        {
+            InMemoryTable* filemem = new InMemoryTable();
+            filemem->TableName = dataName;
+            filemem->LoadCSVData(filePath, true);
+            Data->push_back(filemem);
+           
+        }
+        else
+            ShowMenu();
+        break;
+    }
+       
+    case 'Q':
+    case 'q':
+    {
+        string Query = "";
+        char Selection = 'N';
+        cout << "-------------------------------" << endl;
+        cout << "Enter Query is here" << endl;
+        cin >> Query;
+        cout << "-------------------------------" << endl;
+        cout << "You have entered following." << endl;
+        cout << Query << endl;
+        cout << "Proceed? Yes(Y) No(N)";
+        cin >> Selection;
+        if (Selection == 'Y' || Selection == 'y')
+        {
+            cout << "Query validated" << endl;
+            
+        }
+        else
+            ShowMenu();
+        break;
+    }
+       
+    case 'A':
+    case 'a':
+    {
+        string Query = "";
+        char Selection = 'N';
+        cout << "-------------------------------" << endl;
+        cout << "Enter Aggregate Query is here" << endl;
+        cin >> Query;
+        cout << "-------------------------------" << endl;
+        cout << "You have entered following." << endl;
+        cout << Query << endl;
+        cout << "Proceed? Yes(Y) No(N)";
+        cin >> Selection;
+        if (Selection == 'Y' || Selection == 'y')
+        {
+            cout << "Query validated" << endl;
+        }
+        else
+            ShowMenu();
+
+        break;
+    }
+    case 'E':
+    case 'e':
+        return "e";
+    //break;
+    default:
+        cout << "Invalid selection" << endl;
+        ShowMenu();
+        break;
+    }
+    return "o";
 }
 
